@@ -29,6 +29,19 @@ func main() {
     // Registers the handler for the home page which is templateHandler type
     http.Handle("/", &templateHandler{filename: "chat.html"})
 
+    // Room
+    r := &room{
+        forward: make(chan []byte),
+        join: make(chan *client),
+        leave: make(chan *client),
+        client: make(map[*client]bool),
+    }
+
+    // Register the handler for the room
+    http.Handle("/room", r)
+
+    // Infinitely running waiting for any data to operate on. Blocks while doing one operation
+    go r.run()
     // Error handling
     if err := http.ListenAndServe(":8080", nil); err != nil {
         log.Fatal("ListenAndServe:", err)
