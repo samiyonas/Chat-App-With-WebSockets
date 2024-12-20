@@ -2,6 +2,8 @@ package main
 
 import (
     "net/http"
+    "github.com/gorilla/websocket"
+    "log"
 )
 
 type room struct {
@@ -24,7 +26,7 @@ func (r *room) run() {
             delete(r.client, client)
             close(client.send)
         case msg := <-r.forward:
-            for _, client := range r.client {
+            for client := range r.client {
                 select {
                 case client.send <- msg:
                     // send the message
@@ -45,9 +47,9 @@ var upgrader = websocket.Upgrader{
     WriteBufferSize: 1024,
 }
 
-func (r *room) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (r *room) ServeHTTP(w http.ResponseWriter, req *http.Request) {
     // on success it upgrades and returns the websocket connection representative
-    socket, err := upgrader.Upgrade(w, r, nil)
+    socket, err := upgrader.Upgrade(w, req, nil)
     if err != nil {
         log.Fatal(err)
         return
